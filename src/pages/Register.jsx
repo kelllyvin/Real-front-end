@@ -10,11 +10,13 @@ import { registerSchema } from "../utils/formValidator";
 import { axiosInstance } from "../utils/axiosInstance";
 
 const Register = () => {
-  const [role, setRole] = useState("hunter");
+  const [role, setRole] = useState("tenant");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const redirect = useNavigate();
+  const [isSubmitting, setisSubmitting] = useState(false)
+  
 
   const {
     register,
@@ -22,11 +24,24 @@ const Register = () => {
     formState: { errors },
   } = useForm({ resolver: yupResolver(registerSchema) });
 
-  const handleRegister = (data) => {
+  const handleRegister = async (data) => {
+    setisSubmitting(true)
     try {
-      console.log("Login Data:", { ...data, role });
+      // console.log("Login Data:", { ...data, role });
+      const respons = await axiosInstance.post("/auth/Register", {
+        ...data,
+        role,
+      });
+      if (respons.status === 201) {
+        localStorage.setItem("email", data.email);
+        redirect("/Verification");
+        // stors user mail
+      }
     } catch (error) {
       console.log(error);
+      setErrorMessage(error?.respons?.data?.message)
+    } finally{
+      setisSubmitting (false)
     }
   };
 
@@ -54,9 +69,9 @@ const Register = () => {
         <div className="flex mt-2 justify-between items-center font-medium rounded-lg text-[16px] bg-[#F5F5F5] border border-[#d9d9d9] w-[267px] h-[38px] px-2 py-1">
           <button
             type="button"
-            onClick={() => setRole("hunter")}
+            onClick={() => setRole("tenant")}
             className={
-              role === "hunter"
+              role === "tenant"
                 ? "bg-[#0c0c0c] text-white rounded-lg  px-2 py-1"
                 : "text-[#666] bg-transparent cursor-pointer"
             }
@@ -65,9 +80,9 @@ const Register = () => {
           </button>
           <button
             type="button"
-            onClick={() => setRole("owner")}
+            onClick={() => setRole("landlord")}
             className={
-              role === "owner"
+              role === "landlord"
                 ? "bg-[#0c0c0c] text-white rounded-lg  px-2 py-1"
                 : "text-[#666] bg-transparent cursor-pointer"
             }
@@ -87,12 +102,14 @@ const Register = () => {
           <input
             type="text"
             id="name"
-            {...register("name")}
+            {...register("fullName")}
             className="input w-full rounded-lg border border-[#d9d9d9] h-[56px] text-[16px]"
             placeholder="Enter Full Name"
           />
           {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+            <p className="text-red-500 text-sm mt-1">
+              {errors.fullName.message}
+            </p>
           )}
         </div>
 
@@ -127,12 +144,14 @@ const Register = () => {
           <input
             type="text"
             id="phone"
-            {...register("phone")}
+            {...register("phoneNumber")}
             className="input w-full rounded-lg border border-[#d9d9d9] h-[56px] text-[16px]"
-            placeholder="Enter Phone Number"
+            placeholder="Enter Phone Number (+234)"
           />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+          {errors.phoneNumber && (
+            <p className="text-red-500 text-sm mt-1">
+              {errors.phoneNumber.message}
+            </p>
           )}
         </div>
 
@@ -198,8 +217,8 @@ const Register = () => {
           </div>
         )}
         {/* Submit */}
-        <button className="btn w-full h-[56px] rounded-lg bg-black text-white block mt-6">
-          Register
+        <button disabled ={isSubmitting} className="btn w-full h-[56px] rounded-lg bg-black text-white block mt-6">
+          {isSubmitting ?' Registring...' : 'register'}
         </button>
 
         {/* Link to login */}
